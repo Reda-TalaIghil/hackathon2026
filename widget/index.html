@@ -435,7 +435,7 @@
             <li>Basic analytics</li>
             <li>Email support</li>
           </ul>
-          <button class="btn btn-primary" onclick="alert('Plan selected')">Choose Plan</button>
+          <button class="btn btn-primary" id="btn-starter-plan" onclick="alert('Plan selected')">Choose Plan</button>
         </div>
         
         <div class="pricing-card featured" id="pro-plan">
@@ -447,7 +447,7 @@
             <li>AI insights</li>
             <li>Priority support</li>
           </ul>
-          <button class="btn btn-primary" onclick="alert('Plan selected')">Choose Plan</button>
+          <button class="btn btn-primary" id="btn-pro-plan" onclick="alert('Plan selected')">Choose Plan</button>
         </div>
         
         <div class="pricing-card" id="enterprise-plan">
@@ -459,7 +459,7 @@
             <li>Dedicated support</li>
             <li>SLA guarantee</li>
           </ul>
-          <button class="btn btn-primary" onclick="alert('Contact sales')">Contact Sales</button>
+          <button class="btn btn-primary" id="btn-contact-sales" onclick="alert('Contact sales')">Contact Sales</button>
         </div>
       </div>
     </div>
@@ -526,7 +526,7 @@
   <script>
     window.flowbackConfig = {
       projectId: 'default',
-      apiUrl: 'http://localhost:3001',
+      apiUrl: 'http://localhost:3002',
       consent: true,
       throttleMs: 30000,
       batchSize: 10,

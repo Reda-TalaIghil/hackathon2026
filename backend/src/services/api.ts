@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response } from 'express';
 import { analyticsStore } from '../storage/analytics-store.js';
 import { RedisStore } from '../storage/redis-store.js';
@@ -129,6 +132,9 @@ app.get('/api/insights', async (_req: Request, res: Response) => {
     res.json({
       insights,
       count: insights.length,
+      hotspots,
+      sentiment,
+      evidence,
     });
   } catch (error) {
     console.error('Error fetching insights:', error);
@@ -139,21 +145,37 @@ app.get('/api/insights', async (_req: Request, res: Response) => {
 
 // Generate AI insights endpoint (optional - calls OpenAI)
 app.post('/api/insights/generate', async (req: Request, res: Response) => {
-  const { projectId, hotspots, sentiment, evidence } = req.body;
+  const { projectId: bodyProjectId, hotspots, sentiment, evidence } = req.body;
+  const projectId = bodyProjectId || (req.query.projectId as string) || 'default';
 
   try {
+    // Ensure we have data context
+    let h = hotspots as any[] | undefined;
+    let s = sentiment as any[] | undefined;
+    let e = evidence as any[] | undefined;
+
+    if (!h || !s || !e) {
+      try {
+        h = await analyticsStore.getHotspots(projectId, 10);
+        s = await analyticsStore.getSentimentTrend(projectId, Date.now() - 24 * 60 * 60 * 1000, Date.now());
+        e = await analyticsStore.getEvidence(projectId, 5);
+      } catch (err) {
+        console.warn('Failed to load data context for AI generation, falling back:', err);
+      }
+    }
+
     // Check if OpenAI API key is available
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.json({
-        insights: generateInsights(hotspots, sentiment, evidence),
+        insights: generateInsights(h || [], s || [], e || []),
         source: 'local',
         message: 'OpenAI integration not configured. Set OPENAI_API_KEY env var for AI insights.',
       });
     }
 
     // Call OpenAI to generate insights
-    const insights = await callOpenAI(projectId, hotspots, sentiment, evidence, apiKey);
+    const insights = await callOpenAI(projectId, h || [], s || [], e || [], apiKey);
 
     res.json({
       insights,
@@ -163,6 +185,44 @@ app.post('/api/insights/generate', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error generating insights:', error);
     res.status(500).json({ error: 'Failed to generate insights' });
+  }
+});
+
+// SAM insights endpoint (queries Solace Agent Mesh)
+app.get('/api/sam-insights', async (req: Request, res: Response) => {
+  const projectId = (req.query.projectId as string) || 'default';
+
+  try {
+    // Check if SAM is running (port 8000)
+    const samUrl = process.env.SAM_URL || 'http://localhost:8000';
+    
+    try {
+      // Attempt to query SAM orchestrator API
+      const response = await fetch(`${samUrl}/api/insights?projectId=${projectId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        return res.json({
+          insights: data.insights || [],
+          source: 'sam',
+          timestamp: Date.now(),
+        });
+      }
+    } catch (samError) {
+      // SAM not available, return empty
+      console.log('SAM not available:', samError);
+    }
+
+    // Return empty insights if SAM is not running
+    res.json({
+      insights: [],
+      source: 'sam-offline',
+      message: 'SAM agent mesh is not running. Start SAM to see real-time agent insights.',
+      timestamp: Date.now(),
+    });
+  } catch (error) {
+    console.error('Error fetching SAM insights:', error);
+    res.status(500).json({ error: 'Failed to fetch SAM insights' });
   }
 });
 

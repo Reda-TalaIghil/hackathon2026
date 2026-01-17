@@ -24,22 +24,46 @@ Flowback eliminates traditional surveys by capturing natural, invisible feedback
 npm install
 ```
 
-### 2. Start Services
+### 2. Environment
 
-```bash
-docker-compose up -d
+- Copy `backend/.env` and set your values:
+
+```
+OPENAI_API_KEY=sk-...
+NATS_URL=nats://localhost:4222
+INGEST_PORT=3002
+DASHBOARD_API_PORT=3000
 ```
 
-### 3. Dev Environment
+- Widget demo uses the ingest port from `.env` (currently 3002) via `window.flowbackConfig.apiUrl`.
+
+### 3. Start Services (dev, local)
+
+Run each in its own terminal:
 
 ```bash
+# Ingest (HTTP collector)
+cd backend
 npm run dev
+
+# Dashboard API
+cd backend
+npm run agent:api
+
+# Widget demo
+cd widget
+npm run dev   # Vite will choose an open port (e.g., 5175)
+
+# Dashboard UI
+cd dashboard
+npm run dev   # Vite will choose an open port (e.g., 5176)
 ```
 
-This starts:
-- **Widget dev server**: http://localhost:5173
-- **Backend services**: http://localhost:3001 (ingest)
-- **Dashboard**: http://localhost:5174
+Current defaults (after recent changes):
+- **Ingest**: http://localhost:3002
+- **Dashboard API**: http://localhost:3000
+- **Widget dev**: http://localhost:5175 (Vite auto-picks if busy)
+- **Dashboard dev**: http://localhost:5176 (Vite auto-picks if busy)
 
 ### 4. Embed Widget in Test Page
 
@@ -47,11 +71,11 @@ This starts:
 <script>
   window.flowbackConfig = {
     projectId: 'test-project-123',
-    apiUrl: 'http://localhost:3001',
+    apiUrl: 'http://localhost:3002',
     consent: true
   };
 </script>
-<script src="http://localhost:5173/flowback.js"></script>
+<script src="http://localhost:5175/flowback.js"></script>
 ```
 
 ## Project Structure
@@ -223,22 +247,26 @@ Extend dashboard with "record 30s note" → speech-to-text → insight clusterin
 ## Running Locally
 
 ```bash
-# 1. Install dependencies
-npm install
+# 1. Install dependencies (per package)
+cd backend && npm install
+cd dashboard && npm install
+cd widget && npm install
 
-# 2. Start services (Docker required)
-docker-compose up -d
+# 2. Start Redis if you want persistence (optional but recommended)
+docker run -p 6379:6379 -d redis:7
 
-# 3. Dev mode (all services)
-npm run dev
+# 3. Start ingest & API
+cd backend
+npm run dev          # ingest on INGEST_PORT (default 3002)
+npm run agent:api    # dashboard API on DASHBOARD_API_PORT (default 3000)
 
-# 4. Or run individually
-npm run dev --workspace=widget
-npm run dev --workspace=backend
-npm run dev --workspace=dashboard
+# 4. Start widget and dashboard
+cd widget && npm run dev      # widget dev (Vite picks 5175 if free)
+cd dashboard && npm run dev   # dashboard dev (Vite picks 5176 if free)
 
-# 5. Test widget on localhost:5173
-open http://localhost:5173
+# 5. Open
+# Widget:    http://localhost:5175
+# Dashboard: http://localhost:5176/?projectId=default
 ```
 
 ## API Quick Reference

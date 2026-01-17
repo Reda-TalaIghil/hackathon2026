@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response } from 'express';
 import { NatsMessageBus } from './message-bus.js';
 import { FlowbackEvent } from '../types.js';
@@ -24,22 +27,19 @@ app.use((req, res, next) => {
 });
 
 const messageBus = new NatsMessageBus(process.env.NATS_URL);
-let isConnected = false;
+let busConnected = false;
+let serviceReady = false;
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: isConnected ? 'ready' : 'initializing' });
+  res.json({ status: serviceReady ? (busConnected ? 'ready' : 'degraded') : 'initializing' });
 });
 
 // Events collector endpoint
 app.post('/events', async (req: Request, res: Response) => {
   console.log(`📥 Received ${Array.isArray(req.body) ? req.body.length : 0} events`);
   
-  if (!isConnected) {
-    res.status(503).json({ error: 'Service not ready' });
-    return;
-  }
-
+  // Accept events even if bus is down; they'll still be recorded in analytics store
   const events: FlowbackEvent[] = req.body;
 
   if (!Array.isArray(events)) {
@@ -55,11 +55,12 @@ app.post('/events', async (req: Request, res: Response) => {
         continue;
       }
 
-      // Route to appropriate topic based on event type
-      const topic = `flowback.${event.type}`;
-      await messageBus.publish(topic, event);
-
-      console.log(`✓ Published: ${topic} (session: ${(event as any).sessionId?.slice(0, 8)})`);
+      // Route to appropriate topic based on event type (if bus is available)
+      if (busConnected) {
+        const topic = `flowback.${event.type}`;
+        await messageBus.publish(topic, event);
+        console.log(`✓ Published: ${topic} (session: ${(event as any).sessionId?.slice(0, 8)})`);
+      }
       
       // TEMPORARY: Write directly to analytics store for demo
       // (bypassing agents since they're not connecting in separate processes)
@@ -127,12 +128,21 @@ app.post('/events', async (req: Request, res: Response) => {
 
 // Start server
 async function start() {
+  const PORT = parseInt(process.env.INGEST_PORT || '3001');
+
+  // Attempt to connect to message bus, but don't block service if it fails
   try {
     await messageBus.connect();
-    isConnected = true;
+    busConnected = true;
+    console.log('✓ Connected to NATS message bus');
+  } catch (error) {
+    busConnected = false;
+    console.warn('⚠️ NATS bus unavailable; running in local-only mode:', error);
+  }
 
-    const PORT = parseInt(process.env.INGEST_PORT || '3001');
+  try {
     app.listen(PORT, () => {
+      serviceReady = true;
       console.log(`\n✓ Ingest service listening on port ${PORT}`);
       console.log(`  POST http://localhost:${PORT}/events`);
     });

@@ -9,32 +9,54 @@ cd ~/Projects/hackathon2026
 npm install
 ```
 
-### 2. Start Services
+### 2. Environment
 
-```bash
-# Terminal 1: Docker containers (NATS, Redis, Postgres)
-docker-compose up -d
+Set backend `.env` (sample):
 
-# Wait ~10s for services to be ready
-docker-compose ps
+```
+OPENAI_API_KEY=sk-...
+NATS_URL=nats://localhost:4222
+INGEST_PORT=3002
+DASHBOARD_API_PORT=3000
 ```
 
-### 3. Start Flowback
+Optional: run Redis for persistence (otherwise falls back to in-memory):
 
 ```bash
-# Terminal 2: All services (ingest, agents, dashboard, widget)
+docker run -p 6379:6379 -d redis:7
+```
+
+### 3. Start Services (dev)
+
+Use separate terminals:
+
+```bash
+# Ingest (HTTP collector)
+cd backend
 npm run dev
+
+# Dashboard API
+cd backend
+npm run agent:api
+
+# Widget (Vite dev server)
+cd widget
+npm run dev  # Vite will pick an open port, e.g., 5175
+
+# Dashboard UI (Vite)
+cd dashboard
+npm run dev  # Vite will pick an open port, e.g., 5176
 ```
 
-This starts:
-- **Ingest Service**: http://localhost:3001
+Current defaults:
+- **Ingest Service**: http://localhost:3002
 - **Dashboard API**: http://localhost:3000
-- **Dashboard UI**: http://localhost:5174
-- **Widget**: http://localhost:5173
+- **Dashboard UI**: http://localhost:5176 (auto-chosen if 5174/5175 busy)
+- **Widget**: http://localhost:5175
 
 ### 4. Test Widget
 
-Open http://localhost:5173 in a browser.
+Open http://localhost:5175 in a browser (or the port Vite prints).
 
 - Click around, hover over elements
 - You should see the consent banner
@@ -43,7 +65,7 @@ Open http://localhost:5173 in a browser.
 
 ### 5. View Dashboard
 
-Open http://localhost:5174 in another tab.
+Open http://localhost:5176 (or the port Vite prints) in another tab.
 
 - **Hotspots** tab: Should show friction as you interact with widget
 - **Sentiment** tab: Your reactions will appear
@@ -57,7 +79,7 @@ Open http://localhost:5174 in another tab.
 ### Manually Post Events to Ingest
 
 ```bash
-curl -X POST http://localhost:3001/events \
+curl -X POST http://localhost:3002/events \
   -H "Content-Type: application/json" \
   -d '[
     {
@@ -82,7 +104,7 @@ curl -X POST http://localhost:3001/events \
 
 ```bash
 # Ingest service
-curl http://localhost:3001/health
+curl http://localhost:3002/health
 
 # Dashboard API
 curl http://localhost:3000/health
