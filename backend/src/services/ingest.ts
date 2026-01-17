@@ -69,9 +69,12 @@ app.post('/events', async (req: Request, res: Response) => {
         const action = signalEvent.payload?.action;
         const page = signalEvent.payload?.details?.target || '/demo';
         
+        console.log(`[Ingest] Processing signal: ${action} on ${page}`);
+        
         // Record all signal types as hotspots
         if (action === 'click') {
           const isRageClick = signalEvent.payload?.details?.rageClick;
+          console.log(`[Ingest] Recording click (rage=${isRageClick}) to MongoDB`);
           await mongoStore.recordHotspot(
             event.projectId,
             page,
@@ -81,7 +84,7 @@ app.post('/events', async (req: Request, res: Response) => {
               hesitations: 0, 
               avgDuration: 200 
             },
-            isRageClick ? 0.8 : 0.4 // Higher score for rage clicks
+            0 // Friction score recalculated by store
           );
           if (isRageClick) {
             await mongoStore.recordEvidence(
@@ -94,11 +97,12 @@ app.post('/events', async (req: Request, res: Response) => {
         } else if (action === 'hover') {
           const dwellMs = signalEvent.payload?.details?.dwellMs || 0;
           const hesitation = dwellMs > 3000 ? 1 : 0;
+          console.log(`[Ingest] Recording hover (hesitation=${hesitation}, dwell=${dwellMs}ms) to MongoDB`);
           await mongoStore.recordHotspot(
             event.projectId,
             page,
             { clickCount: 0, rageClicks: 0, hesitations: hesitation, avgDuration: dwellMs },
-            hesitation > 0 ? 0.5 : 0.1
+            0 // Friction score recalculated by store
           );
           if (hesitation > 0) {
             await mongoStore.recordEvidence(
@@ -109,11 +113,12 @@ app.post('/events', async (req: Request, res: Response) => {
             );
           }
         } else if (action === 'idle') {
+          console.log(`[Ingest] Recording idle to MongoDB`);
           await mongoStore.recordHotspot(
             event.projectId,
             page,
             { clickCount: 0, rageClicks: 0, hesitations: 1, avgDuration: signalEvent.payload?.details?.idleMs || 3000 },
-            0.3
+            0 // Friction score recalculated by store
           );
         }
       }

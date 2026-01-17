@@ -311,13 +311,14 @@ Analyze this user behavior data and generate 2-3 actionable, concise insights fo
 Hotspots:
 ${hotspots.slice(0, 3).map(h => `- ${h.page}: ${h.rageClicks} rage-clicks, ${h.hesitations} hesitations (friction ${(h.frictionScore * 100).toFixed(0)}%)`).join('\n')}
 
-Recent Sentiment:
-${sentiment.slice(-3).map(s => `- ${s.date}: ${s.thumbs_up || 0}👍 ${s.thumbs_down || 0}👎`).join('\n')}
+Evidence:
+${evidence.slice(0, 3).map(e => `- ${e.action}: ${e.details}`).join('\n')}
 
-Return as JSON: [{ "title": "...", "description": "...", "frictionType": "...", "confidence": 0.8, "affectedPages": ["..."] }]
+Return ONLY valid JSON array with no markdown formatting: [{ "title": "...", "description": "...", "frictionType": "...", "confidence": 0.8, "affectedPages": ["..."] }]
 `;
 
   try {
+    console.log('[OpenAI] Sending request...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -333,21 +334,34 @@ Return as JSON: [{ "title": "...", "description": "...", "frictionType": "...", 
     });
 
     if (!response.ok) {
-      console.warn(`OpenAI API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.warn(`[OpenAI] API error ${response.status}: ${errorText}`);
       return generateInsights(hotspots, sentiment, evidence);
     }
 
     const data: any = await response.json();
     const content = data.choices[0]?.message?.content || '';
+    console.log('[OpenAI] Response received:', content.substring(0, 200));
 
-    // Parse JSON from response
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    // Parse JSON from response (handle markdown code blocks)
+    let jsonText = content;
+    const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonText = codeBlockMatch[1];
+    }
+    
+    const jsonMatch = jsonText.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
+      console.log(`[OpenAI] Parsed ${parsed.length} insights`);
       return parsed.map((insight: any, idx: number) => ({
         id: `insight_ai_${idx}`,
         ...insight,
       }));
+    }
+
+    console.warn('[OpenAI] Could not parse JSON from response');
+    return generateInsights(hotspots, sentiment, evidence);
     }
 
     return generateInsights(hotspots, sentiment, evidence);

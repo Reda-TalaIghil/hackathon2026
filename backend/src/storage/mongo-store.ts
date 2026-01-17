@@ -66,21 +66,39 @@ export class MongoStore {
       return;
     }
 
-    const hotspot: Hotspot = {
-      projectId,
-      page,
-      rageClicks: metrics.rageClicks || 0,
-      hesitations: metrics.hesitations || 0,
-      backtracks: metrics.backtracks || 0,
-      frictionScore,
-      timestamp: Date.now(),
-    };
+    try {
+      // Fetch existing hotspot to accumulate metrics
+      const existing = await this.db.collection('hotspots').findOne({ projectId, page });
+      
+      const hotspot: Hotspot = {
+        projectId,
+        page,
+        rageClicks: (existing?.rageClicks || 0) + (metrics.rageClicks || 0),
+        hesitations: (existing?.hesitations || 0) + (metrics.hesitations || 0),
+        backtracks: (existing?.backtracks || 0) + (metrics.backtracks || 0),
+        frictionScore: 0, // Will recalculate
+        timestamp: Date.now(),
+      };
 
-    await this.db.collection('hotspots').updateOne(
-      { projectId, page },
-      { $set: hotspot },
-      { upsert: true }
-    );
+      // Recalculate friction score based on accumulated metrics
+      const totalEvents = hotspot.rageClicks + hotspot.hesitations + hotspot.backtracks;
+      const weightedScore = (
+        hotspot.rageClicks * 10 +      // Rage clicks are severe
+        hotspot.hesitations * 5 +       // Hesitations are moderate
+        hotspot.backtracks * 8          // Backtracks are significant
+      );
+      hotspot.frictionScore = Math.min(weightedScore / 100, 1.0); // Normalize to 0-1
+
+      await this.db.collection('hotspots').updateOne(
+        { projectId, page },
+        { $set: hotspot },
+        { upsert: true }
+      );
+      
+      console.log(`[MongoDB] Updated hotspot: ${page} (rage=${hotspot.rageClicks}, friction=${(hotspot.frictionScore * 100).toFixed(0)}%)`);
+    } catch (error) {
+      console.error('[MongoDB] Error recording hotspot:', error);
+    }
   }
 
   async getHotspots(projectId: string, limit: number = 20): Promise<Hotspot[]> {
