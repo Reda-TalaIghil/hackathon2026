@@ -17,7 +17,42 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
   const [samInsights, setSamInsights] = useState<Insight[]>([]);
   const [openaiInsights, setOpenaiInsights] = useState<Insight[]>([]);
   const [aiConnected, setAiConnected] = useState<boolean>(false);
+  const [aiNote, setAiNote] = useState<string>('');
   const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  const normalize = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const dedupeInsights = (primary: Insight[], candidates: Insight[]) => {
+    const seen = new Set<string>();
+
+    return candidates.filter((candidate) => {
+      const candidateKey = `${normalize(candidate.title)}|${normalize(candidate.description)}`;
+
+      // Drop exact repeats in the AI list
+      if (seen.has(candidateKey)) {
+        return false;
+      }
+
+      // Drop anything that matches SAM insight title/description to avoid doubles
+      const overlapsWithSam = primary.some((sam) => {
+        const sameTitle = normalize(sam.title) === normalize(candidate.title);
+        const sameBody = normalize(sam.description) === normalize(candidate.description);
+        return sameTitle && sameBody;
+      });
+
+      if (overlapsWithSam) {
+        return false;
+      }
+
+      seen.add(candidateKey);
+      return true;
+    });
+  };
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -41,14 +76,19 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
           });
 
           if (aiResponse.data?.source === 'openai') {
-            setOpenaiInsights(aiResponse.data.insights || []);
+            const ai = aiResponse.data.insights || [];
+            const uniqueAi = dedupeInsights(baseInsights, ai);
+            setOpenaiInsights(uniqueAi);
+            setAiNote(uniqueAi.length < ai.length ? 'Filtered overlapping insights so AI stays distinct from SAM.' : '');
             setAiConnected(true);
           } else {
             setOpenaiInsights([]);
+            setAiNote('');
             setAiConnected(false);
           }
         } catch {
           setOpenaiInsights([]);
+          setAiNote('');
           setAiConnected(false);
         }
       } catch (error) {
@@ -120,6 +160,7 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
               <span>🔗</span> OpenAI Insights
             </h3>
             <p className="text-slate-400 text-sm">{aiConnected ? `Connected • ${openaiInsights.length} insights` : 'Not configured'}</p>
+            {aiNote && <p className="text-xs text-amber-300 mt-1">{aiNote}</p>}
           </div>
 
           {openaiInsights.length === 0 ? (
