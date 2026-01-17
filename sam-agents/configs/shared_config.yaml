@@ -1,0 +1,26 @@
+broker:
+  &broker_connection
+  type: amqp
+  host: localhost
+  port: 15672
+  username: guest
+  password: guest
+  vhost: /
+  management_host: localhost
+  management_port: 15672
+
+models:
+  general: &general_model
+    name: *general_model_name
+    model_type: openai
+    model_config:
+      timeout_sec: 60
+
+model_names:
+  general_model_name: &general_model_name ${LLM_SERVICE_GENERAL_MODEL_NAME,openai/zai-glm-4.7}
+  planning_model_name: &planning_model_name ${LLM_SERVICE_PLANNING_MODEL_NAME,openai/zai-glm-4.7}
+
+shared_settings:
+  artifact_service: &default_artifact_service
+    type: in_memory
+    max_size_mb: 50

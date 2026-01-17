@@ -1,0 +1,86 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python virtual environments (exclude all venv folders)
+venv/
+env/
+ENV/
+.venv*/
+.env/
+virtualenv/
+Lib/
+Scripts/
+pyvenv.cfg
+site-packages/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+.vite/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker volumes (if any local data)
+.docker/
+
+# Redis dumps
+dump.rdb
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3

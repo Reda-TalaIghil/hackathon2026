@@ -1,0 +1,22 @@
+{
+  "name": "flowback",
+  "version": "0.1.0",
+  "description": "Invisible, in-moment feedback for modern applications",
+  "private": true,
+  "workspaces": [
+    "widget",
+    "backend",
+    "dashboard",
+    "ai"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=widget\" \"npm run dev --workspace=backend\" \"npm run dev --workspace=dashboard\"",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "eslint --ext .js,.ts,.jsx,.tsx ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0",
+    "eslint": "^8.0.0"
+  }
+}

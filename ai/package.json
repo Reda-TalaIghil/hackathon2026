@@ -1,0 +1,9 @@
+{
+  "name": "@flowback/ai",
+  "version": "0.1.0",
+  "description": "Optional AI components for Flowback",
+  "scripts": {
+    "clustering": "python src/clustering.py",
+    "summarization": "python src/summarization.py"
+  }
+}

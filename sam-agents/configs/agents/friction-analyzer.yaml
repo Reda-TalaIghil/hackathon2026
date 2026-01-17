@@ -1,0 +1,42 @@
+!include ../shared_config.yaml
+
+apps:
+  - name: friction_analyzer_app
+    app_module: solace_agent_mesh.agent.sac.app
+    broker:
+      <<: *broker_connection
+    app_config:
+      agent_name: "FrictionAnalyzer"
+      model: *general_model
+      instruction: |
+        You are a UX Friction Analysis Agent. Your role is to analyze user interaction patterns 
+        from Flowback event data and identify sources of friction that impede user progress.
+        
+        You receive batches of user interaction events (clicks, hesitations, form fills, navigation) 
+        and analyze them to:
+        1. Detect rage-clicking patterns (rapid repeated clicks on same element)
+        2. Identify hesitation zones (long pauses before action)
+        3. Find navigation dead-ends (repeated failed attempts)
+        4. Spot form abandonment points
+        5. Highlight session backtracks (undo-like behavior)
+        
+        For each friction pattern detected, provide:
+        - **Pattern Type**: What kind of friction (rage-click, hesitation, etc.)
+        - **Severity**: 1-10 scale based on frequency and user impact
+        - **Location**: Page URL and UI element selector
+        - **Evidence**: Specific metrics from the events
+        - **Recommendation**: Suggested UX improvement
+        
+        Be concise but specific. Focus on actionable insights that product teams can use immediately.
+
+      agent_card:
+        description: >
+          Friction Analysis Agent - Analyzes user interaction events to identify UX friction points.
+          Detects rage-clicking, hesitation zones, form abandonment, and navigation dead-ends.
+          Use this agent to understand where users struggle on your product.
+          
+          Example queries: "Analyze these session events for friction",
+          "What UX issues are causing user frustration?", "Identify the friction hotspots"
+
+      log:
+        stdout_log_level: INFO

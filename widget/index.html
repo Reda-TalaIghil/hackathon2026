@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudFlow - Modern Analytics Platform</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+    
+    /* Header / Navigation */
+    header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      sticky: top;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+    }
+    
+    nav a {
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+    
+    nav a:hover {
+      color: #2563eb;
+    }
+    
+    .nav-cta {
+      background: #2563eb;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    
+    .nav-cta:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 6rem 2rem;
+      text-align: center;
+    }
+    
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      font-weight: 800;
+    }
+    
+    .hero p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+    
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      border: 2px solid white;
+    }
+    
+    .btn-secondary:hover {
+      background: transparent;
+      color: white;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    
+    /* Features Section */
+    .features {
+      padding: 5rem 2rem;
+      background: #f9fafb;
+    }
+    
+    .features h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 3rem;
+      color: #111827;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+    
+    .feature-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .feature-card h3 {
+      margin-bottom: 0.5rem;
+      color: #2563eb;
+    }
+    
+    /* Pricing Section */
+    .pricing {
+      padding: 5rem 2rem;
+    }
+    
+    .pricing h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 3rem;
+      color: #111827;
+    }
+    
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    
+    .pricing-card {
+      border: 2px solid #e5e7eb;
+      padding: 2rem;
+      border-radius: 8px;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .pricing-card:hover {
+      border-color: #2563eb;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+      transform: translateY(-4px);
+    }
+    
+    .pricing-card.featured {
+      border-color: #2563eb;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+      transform: scale(1.05);
+    }
+    
+    .pricing-card h3 {
+      margin-bottom: 0.5rem;
+      color: #111827;
+    }
+    
+    .price {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #2563eb;
+      margin: 1rem 0;
+    }
+    
+    .price span {
+      font-size: 1rem;
+      color: #6b7280;
+    }
+    
+    .pricing-features {
+      list-style: none;
+      margin: 2rem 0;
+    }
+    
+    .pricing-features li {
+      padding: 0.5rem 0;
+      color: #6b7280;
+    }
+    
+    .pricing-features li:before {
+      content: "✓ ";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+    
+    /* CTA Section */
+    .cta {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    
+    .cta h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .cta p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+    
+    /* Footer */
+    footer {
+      background: #1f2937;
+      color: #d1d5db;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: #d1d5db;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: #2563eb;
+    }
+    
+    /* Status Badge */
+    .status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      font-size: 14px;
+      z-index: 1000;
+    }
+    
+    .status .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .form-section {
+      padding: 4rem 2rem;
+      background: white;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #111827;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      max-width: 500px;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <header>
+    <nav>
+      <div class="logo">📊 CloudFlow</div>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a href="#signup" class="nav-cta">Start Free Trial</a>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Real-Time User Insights</h1>
+    <p>Understand your users like never before. Capture, analyze, and act on user behavior instantly.</p>
+    <div class="hero-buttons">
+      <button class="btn btn-primary" id="cta-primary">Get Started Free</button>
+      <button class="btn btn-secondary" id="demo-btn">Watch Demo</button>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2>Powerful Analytics Built In</h2>
+      <div class="feature-grid">
+        <div class="feature-card" id="feature-1">
+          <h3>🎯 Friction Detection</h3>
+          <p>Automatically detect where users struggle. Rage clicks, hesitations, and backtracks tell the real story.</p>
+        </div>
+        <div class="feature-card" id="feature-2">
+          <h3>💬 Real Feedback</h3>
+          <p>One-tap sentiment capture. Understand how users feel without intrusive surveys.</p>
+        </div>
+        <div class="feature-card" id="feature-3">
+          <h3>🤖 AI-Powered Insights</h3>
+          <p>Our AI analyzes patterns and generates actionable recommendations for your team.</p>
+        </div>
+        <div class="feature-card" id="feature-4">
+          <h3>⚡ Real-Time Dashboard</h3>
+          <p>See what's happening right now. Live updates as users interact with your product.</p>
+        </div>
+        <div class="feature-card" id="feature-5">
+          <h3>🔒 Privacy First</h3>
+          <p>Consent-first design. Collect valuable data while respecting user privacy.</p>
+        </div>
+        <div class="feature-card" id="feature-6">
+          <h3>📱 Omnichannel</h3>
+          <p>Works on web, mobile, and embedded experiences. One platform for all channels.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <h2>Simple, Transparent Pricing</h2>
+      <div class="pricing-grid">
+        <div class="pricing-card" id="starter-plan">
+          <h3>Starter</h3>
+          <div class="price">$49<span>/month</span></div>
+          <ul class="pricing-features">
+            <li>Up to 10K events/month</li>
+            <li>Basic analytics</li>
+            <li>Email support</li>
+          </ul>
+          <button class="btn btn-primary" onclick="alert('Plan selected')">Choose Plan</button>
+        </div>
+        
+        <div class="pricing-card featured" id="pro-plan">
+          <h3>Pro</h3>
+          <div class="price">$199<span>/month</span></div>
+          <ul class="pricing-features">
+            <li>Up to 100K events/month</li>
+            <li>Advanced analytics</li>
+            <li>AI insights</li>
+            <li>Priority support</li>
+          </ul>
+          <button class="btn btn-primary" onclick="alert('Plan selected')">Choose Plan</button>
+        </div>
+        
+        <div class="pricing-card" id="enterprise-plan">
+          <h3>Enterprise</h3>
+          <div class="price">Custom</div>
+          <ul class="pricing-features">
+            <li>Unlimited events</li>
+            <li>Custom integrations</li>
+            <li>Dedicated support</li>
+            <li>SLA guarantee</li>
+          </ul>
+          <button class="btn btn-primary" onclick="alert('Contact sales')">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Form Section -->
+  <section class="form-section" id="contact">
+    <div class="container">
+      <h2 style="margin-bottom: 2rem;">Get Started Today</h2>
+      <form id="signup-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="name" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label>Company Email</label>
+          <input type="email" id="email" placeholder="company@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" id="company" placeholder="Your company">
+        </div>
+        <div class="form-group">
+          <label>Company Size</label>
+          <select id="size">
+            <option>Select size...</option>
+            <option>1-10</option>
+            <option>11-50</option>
+            <option>51-200</option>
+            <option>200+</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Start Free Trial</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <h2>Ready to understand your users?</h2>
+    <p>Join hundreds of companies improving UX with Flowback</p>
+    <button class="btn btn-secondary" id="final-cta">Get Started Free →</button>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms of Service</a>
+        <a href="#docs">Documentation</a>
+        <a href="#contact">Support</a>
+      </div>
+      <p>&copy; 2026 CloudFlow Analytics. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div class="status">
+    <span class="dot"></span>
+    <strong>Flowback Active</strong> - Capturing signals...
+  </div>
+
+  <!-- Flowback Widget Configuration -->
+  <script>
+    window.flowbackConfig = {
+      projectId: 'default',
+      apiUrl: 'http://localhost:3001',
+      consent: true,
+      throttleMs: 30000,
+      batchSize: 10,
+      batchIntervalMs: 5000,
+    };
+  </script>
+
+  <!-- Load Flowback Widget -->
+  <script type="module" src="/src/index.ts"></script>
+
+  <!-- Demo interaction handler -->
+  <script>
+    let clickCounts = {};
+    let formInteractions = 0;
+    
+    // Track all button clicks for testing rage-click detection
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.target.id || e.target.textContent || 'button';
+        clickCounts[id] = (clickCounts[id] || 0) + 1;
+        console.log(`Button clicked: ${id} (${clickCounts[id]} times)`);
+      });
+    });
+    
+    // Form submission simulation
+    document.getElementById('signup-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      formInteractions++;
+      const name = document.getElementById('name').value;
+      alert(`Thanks ${name}! Welcome to the CloudFlow free trial. 🎉`);
+      document.getElementById('signup-form').reset();
+    });
+    
+    // Feature hover tracking
+    document.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        console.log('User exploring features:', card.querySelector('h3').textContent);
+      });
+    });
+    
+    // Pricing plan hover tracking
+    document.querySelectorAll('.pricing-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        console.log('User viewing pricing:', card.querySelector('h3').textContent);
+      });
+    });
+  </script>
+</body>
+</html>

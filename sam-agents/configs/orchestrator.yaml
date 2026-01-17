@@ -1,0 +1,12 @@
+!include ../shared_config.yaml
+
+apps:
+  - name: orchestrator
+    app_module: solace_agent_mesh.orchestrator.app
+    broker:
+      <<: *broker_connection
+    app_config:
+      agent_service_namespace: saas
+      management_service_api_port: 8000
+      log:
+        stdout_log_level: INFO
