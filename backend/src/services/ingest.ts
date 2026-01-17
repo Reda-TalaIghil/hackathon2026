@@ -4,7 +4,7 @@ dotenv.config();
 import express, { Request, Response } from 'express';
 import { NatsMessageBus } from './message-bus.js';
 import { FlowbackEvent } from '../types.js';
-import { analyticsStore } from '../storage/analytics-store.js';
+import { mongoStore } from '../storage/mongo-store.js';
 
 /**
  * Ingest Service
@@ -72,7 +72,7 @@ app.post('/events', async (req: Request, res: Response) => {
         // Record all signal types as hotspots
         if (action === 'click') {
           const isRageClick = signalEvent.payload?.details?.rageClick;
-          await analyticsStore.recordHotspot(
+          await mongoStore.recordHotspot(
             event.projectId,
             page,
             { 
@@ -84,7 +84,7 @@ app.post('/events', async (req: Request, res: Response) => {
             isRageClick ? 0.8 : 0.4 // Higher score for rage clicks
           );
           if (isRageClick) {
-            await analyticsStore.recordEvidence(
+            await mongoStore.recordEvidence(
               event.projectId,
               signalEvent.sessionId,
               'rage-click',
@@ -94,14 +94,14 @@ app.post('/events', async (req: Request, res: Response) => {
         } else if (action === 'hover') {
           const dwellMs = signalEvent.payload?.details?.dwellMs || 0;
           const hesitation = dwellMs > 3000 ? 1 : 0;
-          await analyticsStore.recordHotspot(
+          await mongoStore.recordHotspot(
             event.projectId,
             page,
             { clickCount: 0, rageClicks: 0, hesitations: hesitation, avgDuration: dwellMs },
             hesitation > 0 ? 0.5 : 0.1
           );
           if (hesitation > 0) {
-            await analyticsStore.recordEvidence(
+            await mongoStore.recordEvidence(
               event.projectId,
               signalEvent.sessionId,
               'hesitation',
@@ -109,7 +109,7 @@ app.post('/events', async (req: Request, res: Response) => {
             );
           }
         } else if (action === 'idle') {
-          await analyticsStore.recordHotspot(
+          await mongoStore.recordHotspot(
             event.projectId,
             page,
             { clickCount: 0, rageClicks: 0, hesitations: 1, avgDuration: signalEvent.payload?.details?.idleMs || 3000 },
@@ -129,6 +129,14 @@ app.post('/events', async (req: Request, res: Response) => {
 // Start server
 async function start() {
   const PORT = parseInt(process.env.INGEST_PORT || '3001');
+
+  // Connect to MongoDB first
+  try {
+    await mongoStore.connect();
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    process.exit(1);
+  }
 
   // Attempt to connect to message bus, but don't block service if it fails
   try {

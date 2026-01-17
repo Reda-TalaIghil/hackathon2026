@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express, { Request, Response } from 'express';
-import { analyticsStore } from '../storage/analytics-store.js';
+import { mongoStore } from '../storage/mongo-store.js';
 import { RedisStore } from '../storage/redis-store.js';
 
 /**
@@ -40,7 +40,7 @@ app.get('/api/hotspots', async (req: Request, res: Response) => {
   const page = req.query.page as string;
 
   try {
-    const hotspots = await analyticsStore.getHotspots(projectId);
+    const hotspots = await mongoStore.getHotspots(projectId);
     const filtered = page ? hotspots.filter((h: any) => h.page === page) : hotspots;
 
     res.json({
@@ -61,7 +61,7 @@ app.get('/api/sentiment', async (req: Request, res: Response) => {
   const to = parseInt(req.query.to as string) || Date.now();
 
   try {
-    const trend = await analyticsStore.getSentimentTrend(projectId, from, to);
+    const trend = await mongoStore.getSentimentTrend(projectId, from, to);
 
     // Transform to dashboard format
     const grouped: Record<string, Record<string, number>> = {};
@@ -88,7 +88,7 @@ app.get('/api/evidence', async (req: Request, res: Response) => {
   const projectId = req.query.projectId as string || 'default';
 
   try {
-    const evidence = await analyticsStore.getEvidence(projectId);
+    const evidence = await mongoStore.getEvidence(projectId);
 
     res.json({
       evidence: evidence.slice(0, 20),
@@ -122,9 +122,9 @@ app.get('/api/insights', async (_req: Request, res: Response) => {
   const projectId = _req.query.projectId as string || 'default';
 
   try {
-    const hotspots = await analyticsStore.getHotspots(projectId, 10);
-    const sentiment = await analyticsStore.getSentimentTrend(projectId, Date.now() - 24 * 60 * 60 * 1000, Date.now());
-    const evidence = await analyticsStore.getEvidence(projectId, 5);
+    const hotspots = await mongoStore.getHotspots(projectId, 10);
+    const sentiment = await mongoStore.getSentimentTrend(projectId, Date.now() - 24 * 60 * 60 * 1000, Date.now());
+    const evidence = await mongoStore.getEvidence(projectId, 5);
 
     // Generate insights from collected data
     const insights = generateInsights(hotspots, sentiment, evidence);
@@ -156,9 +156,9 @@ app.post('/api/insights/generate', async (req: Request, res: Response) => {
 
     if (!h || !s || !e) {
       try {
-        h = await analyticsStore.getHotspots(projectId, 10);
-        s = await analyticsStore.getSentimentTrend(projectId, Date.now() - 24 * 60 * 60 * 1000, Date.now());
-        e = await analyticsStore.getEvidence(projectId, 5);
+        h = await mongoStore.getHotspots(projectId, 10);
+        s = await mongoStore.getSentimentTrend(projectId, Date.now() - 24 * 60 * 60 * 1000, Date.now());
+        e = await mongoStore.getEvidence(projectId, 5);
       } catch (err) {
         console.warn('Failed to load data context for AI generation, falling back:', err);
       }
@@ -361,6 +361,10 @@ Return as JSON: [{ "title": "...", "description": "...", "frictionType": "...", 
 async function start() {
   try {
     console.log('[API] Starting...');
+    
+    // Connect to MongoDB first
+    await mongoStore.connect();
+    
     const PORT = parseInt(process.env.DASHBOARD_API_PORT || '3000');
     console.log(`[API] Attempting to listen on port ${PORT}`);
     
@@ -392,13 +396,13 @@ process.on('unhandledRejection', (reason, promise) => {
 // Graceful shutdown (disabled in development - tsx watch handles restarts)
 // process.on('SIGINT', async () => {
 //   console.log('\nShutting down...');
-//   await analyticsStore.close();
+//   await mongoStore.disconnect();
 //   await redisStore.disconnect();
 //   process.exit(0);
 // });
 
 console.log('[API] Before calling start()');
-start().catch((error) => {
+start();start().catch((error) => {
   console.error('[API] Fatal error:', error);
   process.exit(1);
 });
