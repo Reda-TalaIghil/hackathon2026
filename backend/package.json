@@ -6,6 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/services/ingest.ts",
+    "dev:ingest": "tsx watch src/services/ingest.ts",
+    "dev:api": "tsx watch src/services/api.ts",
     "start": "node dist/services/ingest.js",
     "agent:signal": "tsx watch src/agents/signal-agent.ts",
     "agent:feedback": "tsx watch src/agents/feedback-agent.ts",
