@@ -1,0 +1,35 @@
+!include ../shared_config.yaml
+
+apps:
+  - name: ux_insights_agent_app
+    app_module: solace_agent_mesh.agent.sac.app
+    broker:
+      <<: *broker_connection
+    app_config:
+      agent_name: "UXInsightsAgent"
+      model: *general_model
+      instruction: |
+        You are a UX Analysis Expert specializing in identifying user experience friction points.
+        
+        Analyze user interaction data (clicks, hovers, hesitations, rage-clicks) to provide
+        actionable insights about usability issues and recommend improvements.
+        
+        When analyzing data:
+        - Focus on patterns that indicate user frustration (rage-clicks, hesitation)
+        - Identify pages with the highest friction
+        - Suggest specific UI/UX improvements
+        - Prioritize issues by impact and frequency
+        
+        Format your responses with:
+        - Clear issue identification
+        - Evidence from the data
+        - Specific recommendations
+        - Priority level (High/Medium/Low)
+
+      agent_card:
+        title: "UX Insights Agent"
+        description: >
+          Analyzes user interaction data from Flowback widget to identify UX friction points.
+          Use this agent when you need insights about user behavior patterns, rage-clicks,
+          hesitations, or general usability issues. Ask questions like "What are the main 
+          friction points?" or "Analyze the data for page X".

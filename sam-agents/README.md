@@ -1,41 +1,44 @@
-# Solace Agent Mesh - Flowback Analytics
+# Flowback Analytics - Solace Agent Mesh Integration
 
-Advanced LLM-powered agents for analyzing user interaction patterns and friction in the Flowback product feedback system.
+Advanced LLM-powered agents for analyzing user interaction patterns and UX friction in the Flowback Analytics platform.
 
-## Services
+This directory contains [Solace Agent Mesh](https://github.com/SolaceLabs/solace-agent-mesh) (SAM) agents that provide AI-powered insights on user experience data.
 
-- **Friction Analyzer Agent**: Analyzes user interactions to identify UX friction points
-- **NATS Event Bridge**: Connects Node.js ingest service to SAM agents
-- **Orchestrator**: Routes analysis requests to specialized agents
+## Features
+
+- **UX Insights Agent**: Analyzes user interactions to identify friction points and usability issues
+- **Event-driven architecture**: Integrates with Flowback's NATS message bus
+- **Built on SAM 1.13.3**: Uses official Solace Agent Mesh framework
 
 ## Quick Start
 
-### 1. Set up Environment
+### Option 1: Docker (Recommended)
 
 ```bash
+# Create .env file
 cp .env.example .env
-# Edit .env with your Cerebras API key:
-# LLM_SERVICE_API_KEY=your-key-here
+# Edit .env with your Cerebras API key
+
+# Build and run
+docker build -t flowback-sam .
+docker run -d --rm -p 8000:8000 --env-file .env --name flowback-sam flowback-sam
+
+# Access Web UI
+# Open http://localhost:8000 in your browser
 ```
 
-### 2. Install Dependencies
+### Option 2: Local CLI (Faster Development)
 
-Requires Python 3.11+. Using `uv` (recommended):
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/getting-started/installation/):
 
 ```bash
+# Install dependencies
 uv sync
-```
 
-Or with pip:
-
-```bash
-pip install -e .
-```
-
-### 3. Run SAM Agents
-
-```bash
+# Run SAM
 uv run sam run configs/
+
+# Access Web UI at http://localhost:8000
 ```
 
 The agents will start and listen for events from the Node.js ingest service via NATS.
