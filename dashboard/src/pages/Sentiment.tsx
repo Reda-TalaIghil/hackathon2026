@@ -32,7 +32,7 @@ export const Sentiment: React.FC<{ apiUrl: string; projectId: string }> = ({
     };
 
     fetchSentiment();
-    const interval = setInterval(fetchSentiment, 60000); // Refresh every minute
+    const interval = setInterval(fetchSentiment, 10000); // Refresh every 10s
 
     return () => clearInterval(interval);
   }, [apiUrl, projectId]);

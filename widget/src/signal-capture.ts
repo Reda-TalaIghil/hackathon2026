@@ -47,63 +47,70 @@ export class SignalCapture {
   }
 
   private captureClick(event: MouseEvent) {
-    const target = (event.target as HTMLElement).id || event.target?.toString();
+    const target = (event.target as HTMLElement);
+    const targetId = target.id || target.className || target.tagName;
 
     // Track for rage-click detection
     const now = Date.now();
-    if (!this.clickBuffer.has(target)) {
-      this.clickBuffer.set(target, []);
+    if (!this.clickBuffer.has(targetId)) {
+      this.clickBuffer.set(targetId, []);
     }
-    this.clickBuffer.get(target)!.push(now);
+    this.clickBuffer.get(targetId)!.push(now);
 
     // Clean old clicks (>1s old)
-    const clicks = this.clickBuffer.get(target)!;
+    const clicks = this.clickBuffer.get(targetId)!;
     const filtered = clicks.filter((t) => now - t < this.rageClickThresholdMs);
-    this.clickBuffer.set(target, filtered);
+    this.clickBuffer.set(targetId, filtered);
 
     // Detect rage-click (3+ clicks in threshold)
     if (filtered.length >= 3) {
       const spanMs = filtered[filtered.length - 1] - filtered[0];
       if (spanMs <= this.rageClickThresholdMs) {
+        console.log(`[Flowback] 🖱️ RAGE CLICK detected on: ${targetId}`);
         this.emit('signal.raw', {
           action: 'click',
-          target,
+          target: targetId,
           rageClick: true,
           count: filtered.length,
           spanMs,
         });
-        this.clickBuffer.set(target, []); // Reset
+        this.clickBuffer.set(targetId, []); // Reset
         return;
       }
     }
 
     // Normal click
+    console.log(`[Flowback] Click on: ${targetId}`);
     this.emit('signal.raw', {
       action: 'click',
-      target,
+      target: targetId,
     });
   }
 
   private captureHover(event: MouseEvent) {
-    const target = (event.target as HTMLElement).id || event.target?.toString();
+    const target = (event.target as HTMLElement);
+    const targetId = target.id || target.className || target.tagName;
     const now = Date.now();
-    this.hoverStart.set(target, now);
+    this.hoverStart.set(targetId, now);
+    console.log(`[Flowback] Hover start on: ${targetId}`);
   }
 
   private captureHoverEnd(event: MouseEvent) {
-    const target = (event.target as HTMLElement).id || event.target?.toString();
-    const startTime = this.hoverStart.get(target);
+    const target = (event.target as HTMLElement);
+    const targetId = target.id || target.className || target.tagName;
+    const startTime = this.hoverStart.get(targetId);
     if (startTime) {
       const dwellMs = Date.now() - startTime;
       if (dwellMs > 500) {
         // Only report significant hovers
+        console.log(`[Flowback] ⏸️ HESITATION on ${targetId}: ${dwellMs}ms dwell`);
         this.emit('signal.raw', {
           action: 'hover',
-          target,
+          target: targetId,
           dwellMs,
         });
       }
-      this.hoverStart.delete(target);
+      this.hoverStart.delete(targetId);
     }
   }
 

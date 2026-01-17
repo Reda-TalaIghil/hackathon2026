@@ -30,6 +30,9 @@ export const Evidence: React.FC<{ apiUrl: string; projectId: string }> = ({
     };
 
     fetchEvidence();
+    const interval = setInterval(fetchEvidence, 15000); // Refresh every 15s
+
+    return () => clearInterval(interval);
   }, [apiUrl, projectId]);
 
   if (loading) {

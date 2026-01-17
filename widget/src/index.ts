@@ -39,7 +39,7 @@ class Flowback {
 
     this.consentManager = new ConsentManager(config.projectId, (granted) => {
       this.session.consentGranted = granted;
-    });
+    }, config.consent);
 
     this.eventQueue = new EventQueue(
       config.apiUrl,
@@ -57,18 +57,18 @@ class Flowback {
       return;
     }
 
-    // Show consent banner if not already consented
-    if (!this.session.consentGranted) {
+    // Show consent banner only if consent not already given in config
+    if (!this.session.consentGranted && this.config.consent !== true) {
       this.consentManager.showBanner();
     }
 
-    // Start signal capture if consent granted
+    // Start signal capture if consent granted (either from config or localStorage)
     if (this.session.consentGranted) {
       this.startCapture();
     }
 
     this.initialized = true;
-    console.log('Flowback: Initialized', { projectId: this.config.projectId });
+    console.log('Flowback: Initialized', { projectId: this.config.projectId, consentGranted: this.session.consentGranted });
   }
 
   private startCapture() {

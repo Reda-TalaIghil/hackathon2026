@@ -11,19 +11,22 @@ export class ConsentManager {
   private consentGranted: boolean = false;
   private onConsentChange: (granted: boolean) => void;
 
-  constructor(projectId: string, onConsentChange: (granted: boolean) => void) {
+  constructor(projectId: string, onConsentChange: (granted: boolean) => void, initialConsent?: boolean) {
     this.projectId = projectId;
     this.storageKey = `flowback_consent_${projectId}`;
     this.onConsentChange = onConsentChange;
-    this.loadConsent();
+    this.loadConsent(initialConsent);
   }
 
-  private loadConsent() {
+  private loadConsent(initialConsent?: boolean) {
     const stored = localStorage.getItem(this.storageKey);
     if (stored !== null) {
       this.consentGranted = stored === 'true';
-      this.onConsentChange(this.consentGranted);
+    } else if (initialConsent !== undefined) {
+      // Use initial config if no stored value
+      this.consentGranted = initialConsent;
     }
+    this.onConsentChange(this.consentGranted);
   }
 
   public showBanner() {

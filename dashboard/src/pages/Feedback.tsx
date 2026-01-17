@@ -14,9 +14,9 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
   apiUrl,
   projectId,
 }) => {
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<'local' | 'openai'>('local');
+  const [samInsights, setSamInsights] = useState<Insight[]>([]);
+  const [openaiInsights, setOpenaiInsights] = useState<Insight[]>([]);
+  const [aiConnected, setAiConnected] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
@@ -25,49 +25,46 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
         const response = await axios.get(`${apiUrl}/api/insights`, {
           params: { projectId },
         });
-        setInsights(response.data.insights || []);
+
+        const baseInsights: Insight[] = response.data.insights || [];
+        setSamInsights(baseInsights);
         setLastUpdated(new Date().toLocaleTimeString());
-        
-        // Try to fetch from OpenAI if available
+
+        // Try to fetch OpenAI-generated insights for comparison
         try {
           const aiResponse = await axios.post(`${apiUrl}/api/insights/generate`, {
             projectId,
+            // Pass through any available context if backend includes it
             hotspots: response.data.hotspots || [],
             sentiment: response.data.sentiment || [],
             evidence: response.data.evidence || [],
           });
-          setInsights(aiResponse.data.insights || response.data.insights || []);
-          setSource(aiResponse.data.source === 'openai' ? 'openai' : 'local');
+
+          if (aiResponse.data?.source === 'openai') {
+            setOpenaiInsights(aiResponse.data.insights || []);
+            setAiConnected(true);
+          } else {
+            setOpenaiInsights([]);
+            setAiConnected(false);
+          }
         } catch {
-          setSource('local');
+          setOpenaiInsights([]);
+          setAiConnected(false);
         }
       } catch (error) {
         console.error('Error fetching feedback:', error);
       } finally {
-        setLoading(false);
+        // No-op
       }
     };
 
     fetchInsights();
-    const interval = setInterval(fetchInsights, 60000); // Refresh every minute
+    const interval = setInterval(fetchInsights, 10000); // Refresh every 10s
 
     return () => clearInterval(interval);
   }, [apiUrl, projectId]);
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'rage-clicks':
-        return 'bg-red-50 border-red-200';
-      case 'hesitation':
-        return 'bg-yellow-50 border-yellow-200';
-      case 'sentiment':
-        return 'bg-orange-50 border-orange-200';
-      case 'positive':
-        return 'bg-green-50 border-green-200';
-      default:
-        return 'bg-blue-50 border-blue-200';
-    }
-  };
+  // Icon mapping for insight types
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -92,77 +89,156 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
           <div className="flex-1">
             <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
               <span className="text-4xl">🤖</span>
-              AI-Powered User Feedback
+              Side-by-Side Insights
             </h2>
             <p className="text-slate-400">
-              Intelligent insights from {insights.length} detected patterns • Powered by {source === 'openai' ? 'OpenAI GPT-3.5' : 'Local Analytics'}
+              Compare AI-generated insights with SAM analytics to make decisions faster.
             </p>
           </div>
           <div className="text-right">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-xs text-slate-300">{source === 'openai' ? '🔗 AI Connected' : '⚙️ Local Mode'}</span>
+            <div className="flex gap-2">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-xs text-slate-300">{aiConnected ? '🔗 OpenAI Connected' : '⚠️ OpenAI Unavailable'}</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-xs text-slate-300">🧠 SAM Analytics</span>
+              </div>
             </div>
             <p className="text-xs text-slate-500 mt-2">Updated {lastUpdated}</p>
           </div>
         </div>
       </div>
 
-      {/* Insights Grid */}
-      {insights.length === 0 ? (
-        <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
-          <p className="text-4xl mb-3">📊</p>
-          <p className="text-lg text-slate-300 font-semibold">No insights yet</p>
-          <p className="text-slate-400 mt-2 text-sm">Interactions will appear as users explore your product</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {insights.map((insight) => (
-            <div
-              key={insight.id}
-              className="backdrop-blur-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all duration-300 group cursor-pointer"
-            >
-              <div className="flex items-start gap-4">
-                <span className="text-4xl group-hover:scale-110 transition-transform">{getTypeIcon(insight.frictionType)}</span>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-white mb-2">{insight.title}</h3>
-                  <p className="text-slate-300 text-sm leading-relaxed mb-4">{insight.description}</p>
-                  
-                  {/* Confidence Meter */}
-                  {insight.confidence && (
-                    <div className="mb-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-semibold text-slate-400">Confidence Score</span>
-                        <span className="text-sm font-bold text-cyan-400">{Math.round(insight.confidence * 100)}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
-                          style={{ width: `${Math.round(insight.confidence * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Affected Pages */}
-                  {insight.affectedPages && insight.affectedPages.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {insight.affectedPages.map((page) => (
-                        <span
-                          key={page}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-white/10 rounded-lg text-xs text-slate-300 font-medium"
-                        >
-                          📍 {page}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+      {/* Side-by-side Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* OpenAI Column */}
+        <div className="space-y-4">
+          <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h3 className="text-white font-bold text-lg flex items-center gap-2">
+              <span>🔗</span> OpenAI Insights
+            </h3>
+            <p className="text-slate-400 text-sm">{aiConnected ? `Connected • ${openaiInsights.length} insights` : 'Not configured'}</p>
+          </div>
+
+          {openaiInsights.length === 0 ? (
+            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
+              <p className="text-4xl mb-3">🤖</p>
+              <p className="text-lg text-slate-300 font-semibold">No AI insights</p>
+              <p className="text-slate-400 mt-2 text-sm">Configure OpenAI to see generated recommendations.</p>
             </div>
-          ))}
+          ) : (
+            <div className="space-y-4">
+              {openaiInsights.map((insight) => (
+                <div
+                  key={insight.id}
+                  className="backdrop-blur-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all duration-300 group cursor-pointer"
+                >
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl group-hover:scale-110 transition-transform">{getTypeIcon(insight.frictionType)}</span>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2">{insight.title}</h3>
+                      <p className="text-slate-300 text-sm leading-relaxed mb-4">{insight.description}</p>
+
+                      {insight.confidence && (
+                        <div className="mb-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-semibold text-slate-400">Confidence Score</span>
+                            <span className="text-sm font-bold text-cyan-400">{Math.round(insight.confidence * 100)}%</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                              style={{ width: `${Math.round(insight.confidence * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {insight.affectedPages && insight.affectedPages.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {insight.affectedPages.map((page) => (
+                            <span
+                              key={page}
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-white/10 rounded-lg text-xs text-slate-300 font-medium"
+                            >
+                              📍 {page}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* SAM Column */}
+        <div className="space-y-4">
+          <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h3 className="text-white font-bold text-lg flex items-center gap-2">
+              <span>🧠</span> SAM Insights
+            </h3>
+            <p className="text-slate-400 text-sm">Live analytics • {samInsights.length} insights</p>
+          </div>
+
+          {samInsights.length === 0 ? (
+            <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
+              <p className="text-4xl mb-3">📊</p>
+              <p className="text-lg text-slate-300 font-semibold">No insights yet</p>
+              <p className="text-slate-400 mt-2 text-sm">Interactions will appear as users explore your product</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {samInsights.map((insight) => (
+                <div
+                  key={insight.id}
+                  className="backdrop-blur-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all duration-300 group cursor-pointer"
+                >
+                  <div className="flex items-start gap-4">
+                    <span className="text-4xl group-hover:scale-110 transition-transform">{getTypeIcon(insight.frictionType)}</span>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2">{insight.title}</h3>
+                      <p className="text-slate-300 text-sm leading-relaxed mb-4">{insight.description}</p>
+
+                      {insight.confidence && (
+                        <div className="mb-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-semibold text-slate-400">Confidence Score</span>
+                            <span className="text-sm font-bold text-cyan-400">{Math.round(insight.confidence * 100)}%</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                              style={{ width: `${Math.round(insight.confidence * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {insight.affectedPages && insight.affectedPages.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {insight.affectedPages.map((page) => (
+                            <span
+                              key={page}
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-white/10 rounded-lg text-xs text-slate-300 font-medium"
+                            >
+                              📍 {page}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Action Tips */}
       <div className="backdrop-blur-md bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-400/20 rounded-2xl p-8">

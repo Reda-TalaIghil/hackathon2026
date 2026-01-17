@@ -7,8 +7,8 @@ dependencies = [
     "solace-agent-mesh==1.13.3",
 ]
 
-[tool.uv]
-python-version = "3.11"
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [build-system]
 requires = ["hatchling"]

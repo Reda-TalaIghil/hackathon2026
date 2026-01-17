@@ -31,7 +31,7 @@ export const Hotspots: React.FC<{ apiUrl: string; projectId: string }> = ({
     };
 
     fetchHotspots();
-    const interval = setInterval(fetchHotspots, 30000); // Refresh every 30s
+    const interval = setInterval(fetchHotspots, 10000); // Refresh every 10s
 
     return () => clearInterval(interval);
   }, [apiUrl, projectId]);
