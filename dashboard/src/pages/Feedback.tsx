@@ -99,7 +99,7 @@ export const Feedback: React.FC<{ apiUrl: string; projectId: string }> = ({
     };
 
     fetchInsights();
-    const interval = setInterval(fetchInsights, 10000); // Refresh every 10s
+    const interval = setInterval(fetchInsights, 120000); // Refresh every 2 minutes (reduced from 10s)
 
     return () => clearInterval(interval);
   }, [apiUrl, projectId]);

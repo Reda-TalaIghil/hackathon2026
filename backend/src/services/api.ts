@@ -143,12 +143,28 @@ app.get('/api/insights', async (_req: Request, res: Response) => {
   }
 });
 
+// In-memory cache for OpenAI responses (1 minute TTL)
+const openAICache = new Map<string, { insights: any[], timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute
+
 // Generate AI insights endpoint (optional - calls OpenAI)
 app.post('/api/insights/generate', async (req: Request, res: Response) => {
   const { projectId: bodyProjectId, hotspots, sentiment, evidence } = req.body;
   const projectId = bodyProjectId || (req.query.projectId as string) || 'default';
 
   try {
+    // Check cache first
+    const cached = openAICache.get(projectId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log(`[OpenAI] Using cached insights for ${projectId}`);
+      return res.json({
+        insights: cached.insights,
+        source: 'openai',
+        cached: true,
+        timestamp: cached.timestamp,
+      });
+    }
+
     // Ensure we have data context
     let h = hotspots as any[] | undefined;
     let s = sentiment as any[] | undefined;
@@ -174,12 +190,18 @@ app.post('/api/insights/generate', async (req: Request, res: Response) => {
       });
     }
 
+    console.log(`[OpenAI] Making fresh API call for ${projectId}`);
+    
     // Call OpenAI to generate insights
     const insights = await callOpenAI(projectId, h || [], s || [], e || [], apiKey);
+
+    // Cache the result
+    openAICache.set(projectId, { insights, timestamp: Date.now() });
 
     res.json({
       insights,
       source: 'openai',
+      cached: false,
       timestamp: Date.now(),
     });
   } catch (error) {
@@ -361,9 +383,6 @@ Return ONLY valid JSON array with no markdown formatting: [{ "title": "...", "de
     }
 
     console.warn('[OpenAI] Could not parse JSON from response');
-    return generateInsights(hotspots, sentiment, evidence);
-    }
-
     return generateInsights(hotspots, sentiment, evidence);
   } catch (error) {
     console.warn('OpenAI API unavailable, using local insights:', error);
