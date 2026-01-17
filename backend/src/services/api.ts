@@ -368,7 +368,7 @@ async function start() {
     const PORT = parseInt(process.env.DASHBOARD_API_PORT || '3000');
     console.log(`[API] Attempting to listen on port ${PORT}`);
     
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n✓ Dashboard API listening on port ${PORT}`);
       console.log(`  GET http://localhost:${PORT}/api/hotspots?projectId=default`);
       console.log(`  GET http://localhost:${PORT}/api/sentiment?projectId=default`);
@@ -402,7 +402,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // });
 
 console.log('[API] Before calling start()');
-start();start().catch((error) => {
+start().catch((error) => {
   console.error('[API] Fatal error:', error);
   process.exit(1);
 });
